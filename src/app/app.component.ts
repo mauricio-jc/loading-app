@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { AppService } from './app.service';
-import { lastValueFrom } from 'rxjs';
+import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -8,49 +7,21 @@ import { lastValueFrom } from 'rxjs';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
-  loading: boolean = true;
-  forbidden: boolean = false;
-  users: any = [];
-  forms: any = [];
+  loading = false;
 
-  constructor(private appService: AppService) {}
+  constructor(public router: Router) {
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationStart) {
+        this.loading = true;
+      }
 
-  ngOnInit(): void {
-    this.init();
+      if (event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError) {
+        this.loading = false;
+        console.log(event);
+      }
+    });
   }
 
-  async init(): Promise<any> {
-    try {
-      const isFormAdmin = await lastValueFrom(this.appService.isFormAdmin());
-
-      if(!isFormAdmin) {
-        this.forbidden = true;
-        this.loading = false;
-        return;
-      }
-    } catch (error: any) {
-      if(error.status === 403) {
-        this.forbidden = true;
-      }
-
-      this.loading = false;
-      return;
-    }
-
-    try {
-      this.users = await lastValueFrom(this.appService.findAllUsers());
-    } catch (error) {
-      this.loading = false;
-      return;
-    }
-
-    try {
-      this.forms = await lastValueFrom(this.appService.findAllForms());
-    } catch (error) {
-      this.loading = false;
-      return;
-    }
-
-    this.loading = false;
+  ngOnInit(): void {
   }
 }
