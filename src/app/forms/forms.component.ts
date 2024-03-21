@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject, takeUntil } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { forkJoin, Subject, takeUntil } from 'rxjs';
+import { FormsService } from './forms.service';
 
 @Component({
   selector: 'app-forms',
@@ -8,68 +8,43 @@ import { ActivatedRoute } from '@angular/router';
   styleUrls: ['./forms.component.css']
 })
 export class FormsComponent implements OnInit, OnDestroy {
-  private unsubscribeAll: Subject<any> = new Subject<any>();
+  loading: boolean = true;
   forbidden: boolean = false;
-  isFormAdmin: boolean = false;
   users: any = [];
   forms: any = [];
+  private _unsubscribe: Subject<void> = new Subject<void>();
 
-  constructor(private activatedRoute: ActivatedRoute,) {}
+  constructor(private formsService: FormsService) {}
 
-  ngOnInit(): void {
-    this.activatedRoute.data
+  ngOnInit() {
+    forkJoin({
+      admin: this.formsService.isFormAdmin(),
+      users: this.formsService.findAllUsers(),
+      forms: this.formsService.findAllForms(),
+    })
     .pipe(
-      takeUntil(this.unsubscribeAll)
+      takeUntil(this._unsubscribe)
     )
     .subscribe({
       next: (response) => {
-        this.isFormAdmin = response['initial'][0];
-        this.users = response['initial'][0];
-        this.forms = response['initial'][0];
+        this.users = response.users;
+        this.forms = response.forms;
       },
       error: (error) => {
-        console.log(error);
+        this.loading = false;
+
+        if (error.status === 403) {
+          this.forbidden = true;
+        }
+      },
+      complete: () => {
+        this.loading = false;
       }
     });
   }
 
-  ngOnDestroy(): void {
-    this.unsubscribeAll.next(null);
-    this.unsubscribeAll.complete();
+  ngOnDestroy() {
+    this._unsubscribe.next();
+    this._unsubscribe.complete();
   }
-
-  // async init(): Promise<any> {
-  //   try {
-  //     const isFormAdmin = await lastValueFrom(this.formsService.isFormAdmin());
-
-  //     if(!isFormAdmin) {
-  //       this.forbidden = true;
-  //       this.loading = false;
-  //       return;
-  //     }
-  //   } catch (error: any) {
-  //     if(error.status === 403) {
-  //       this.forbidden = true;
-  //     }
-
-  //     this.loading = false;
-  //     return;
-  //   }
-
-  //   try {
-  //     this.users = await lastValueFrom(this.formsService.findAllUsers());
-  //   } catch (error) {
-  //     this.loading = false;
-  //     return;
-  //   }
-
-  //   try {
-  //     this.forms = await lastValueFrom(this.formsService.findAllForms());
-  //   } catch (error) {
-  //     this.loading = false;
-  //     return;
-  //   }
-
-  //   this.loading = false;
-  // }
 }

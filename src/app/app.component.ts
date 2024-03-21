@@ -7,20 +7,20 @@ import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Rout
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
-  loading = false;
+  // loading = false;
 
-  constructor(public router: Router) {
-    this.router.events.subscribe(event => {
-      if (event instanceof NavigationStart) {
-        this.loading = true;
-      }
+  // constructor(public router: Router) {
+  //   this.router.events.subscribe(event => {
+  //     if (event instanceof NavigationStart) {
+  //       this.loading = true;
+  //     }
 
-      if (event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError) {
-        this.loading = false;
-        console.log(event);
-      }
-    });
-  }
+  //     if (event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError) {
+  //       this.loading = false;
+  //       console.log(event);
+  //     }
+  //   });
+  // }
 
   ngOnInit(): void {
   }
